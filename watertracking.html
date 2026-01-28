@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>Water Tracker</title>
+
+    <style>
+      :root {
+        --bg1: #0b1220;
+        --bg2: #07111f;
+        --card: rgba(255, 255, 255, 0.08);
+        --card2: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --muted2: rgba(255, 255, 255, 0.45);
+
+        --blue1: #4cc9f0;
+        --blue2: #4895ef;
+        --good: #3ddc97;
+        --bad: #ff5a5f;
+
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        --radius: 22px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Display",
+          "SF Pro Text",
+          system-ui,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background:
+          radial-gradient(
+            1200px 700px at 20% 10%,
+            rgba(76, 201, 240, 0.2),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 600px at 80% 0%,
+            rgba(72, 149, 239, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(
+            1000px 900px at 50% 110%,
+            rgba(61, 220, 151, 0.1),
+            transparent 60%
+          ),
+          linear-gradient(180deg, var(--bg1), var(--bg2));
+        display: grid;
+        place-items: center;
+        padding: 22px;
+      }
+
+      .app {
+        width: min(420px, 100%);
+        display: grid;
+        gap: 14px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 2px;
+      }
+
+      .title {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .card {
+        background: linear-gradient(
+          180deg,
+          var(--card),
+          var(--card2)
+        );
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+
+      .bigRow {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .bigNumber {
+        font-size: 54px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: -1px;
+      }
+
+      .unit {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-left: 6px;
+      }
+
+      .goalPill {
+        font-size: 13px;
+        color: var(--muted);
+        border: 1px solid var(--stroke);
+        padding: 10px 12px;
+        border-radius: 999px;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: linear-gradient(
+          180deg,
+          var(--blue1),
+          var(--blue2)
+        );
+        box-shadow: 0 0 18px rgba(76, 201, 240, 0.45);
+      }
+
+      .progressWrap {
+        margin-top: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .progressTop {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .bar {
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      .fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          var(--blue1),
+          var(--blue2)
+        );
+        box-shadow: 0 0 22px rgba(72, 149, 239, 0.45);
+        transition: width 220ms ease;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text);
+        padding: 12px 12px;
+        border-radius: 16px;
+        font-weight: 750;
+        font-size: 14px;
+        cursor: pointer;
+        transition:
+          transform 120ms ease,
+          background 120ms ease;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      .primary {
+        background: linear-gradient(
+          180deg,
+          rgba(76, 201, 240, 0.95),
+          rgba(72, 149, 239, 0.95)
+        );
+        border: none;
+        color: #061021;
+      }
+
+      .ghost {
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .danger {
+        background: rgba(255, 90, 95, 0.16);
+        border: 1px solid rgba(255, 90, 95, 0.35);
+      }
+
+      .footerRow {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .status {
+        color: var(--muted2);
+        font-size: 12px;
+      }
+
+      .tinyBtn {
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-weight: 750;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <div class="header">
+        <div>
+          <div class="title">Gallon Water Tracker</div>
+          <div class="subtitle">Resets daily at 5:00 AM Central</div>
+        </div>
+        <div class="goalPill">
+          <span class="dot"></span>
+          <span>Goal: <strong>128 oz</strong></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="bigRow">
+          <div>
+            <span class="bigNumber" id="bigNumber">0</span>
+            <span class="unit">oz</span>
+          </div>
+          <div class="goalPill" id="percentPill">0%</div>
+        </div>
+
+        <div class="progressWrap">
+          <div class="progressTop">
+            <span id="progressText">0 / 128</span>
+            <span id="remainingText">128 oz left</span>
+          </div>
+          <div class="bar">
+            <div class="fill" id="fill"></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <button class="primary" onclick="addWater(8)">+8</button>
+          <button class="primary" onclick="addWater(16)">+16</button>
+          <button class="primary" onclick="addWater(25)">+25</button>
+
+          <button class="ghost" onclick="addWater(32)">+32</button>
+          <button class="ghost" onclick="subtractWater(8)">
+            Undo -8
+          </button>
+          <button class="danger" onclick="reset()">Reset</button>
+        </div>
+
+        <div class="footerRow">
+          <div class="status" id="status">Saved on device</div>
+          <button class="tinyBtn ghost" onclick="setGoalPrompt()">
+            Change goal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let oz = 0;
+      let goalOz = 128;
+
+      function computeNext5amCentralExpiry() {
+        const now = new Date();
+        const fmt = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago",
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        });
+
+        const parts = fmt.formatToParts(now).reduce((acc, p) => {
+          if (p.type !== "literal") acc[p.type] = p.value;
+          return acc;
+        }, {});
+
+        const centralYear = parseInt(parts.year, 10);
+        const centralMonth = parseInt(parts.month, 10);
+        const centralDay = parseInt(parts.day, 10);
+        const centralHour = parseInt(parts.hour, 10);
+        const centralMinute = parseInt(parts.minute, 10);
+        const centralSecond = parseInt(parts.second, 10);
+
+        let target = new Date(
+          centralYear,
+          centralMonth - 1,
+          centralDay,
+        );
+        if (centralHour >= 5) target.setDate(target.getDate() + 1);
+
+        const targetYear = target.getFullYear();
+        const targetMonth = target.getMonth();
+        const targetDayNum = target.getDate();
+
+        const localForCentralNow = new Date(
+          centralYear,
+          centralMonth - 1,
+          centralDay,
+          centralHour,
+          centralMinute,
+          centralSecond,
+        );
+
+        const offsetMs = Date.now() - localForCentralNow.getTime();
+
+        const localForTarget5am = new Date(
+          targetYear,
+          targetMonth,
+          targetDayNum,
+          5,
+          0,
+          0,
+        );
+
+        let expiryMs = localForTarget5am.getTime() + offsetMs;
+        if (expiryMs <= Date.now()) expiryMs += 24 * 60 * 60 * 1000;
+        return expiryMs;
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem("water_oz", String(oz));
+          localStorage.setItem("water_goal", String(goalOz));
+
+          let expiry = parseInt(
+            localStorage.getItem("water_expiry"),
+            10,
+          );
+          if (!expiry || expiry <= Date.now()) {
+            expiry = computeNext5amCentralExpiry();
+            localStorage.setItem("water_expiry", String(expiry));
+          }
+        } catch (e) {}
+      }
+
+      function loadState() {
+        try {
+          const expiry = parseInt(
+            localStorage.getItem("water_expiry"),
+            10,
+          );
+          if (!expiry || expiry <= Date.now()) {
+            localStorage.removeItem("water_oz");
+            localStorage.setItem(
+              "water_expiry",
+              String(computeNext5amCentralExpiry()),
+            );
+            oz = 0;
+          } else {
+            const stored = localStorage.getItem("water_oz");
+            oz = stored ? parseInt(stored, 10) || 0 : 0;
+          }
+
+          const g = localStorage.getItem("water_goal");
+          goalOz = g ? Math.max(1, parseInt(g, 10) || 128) : 128;
+        } catch (e) {
+          oz = 0;
+          goalOz = 128;
+        }
+      }
+
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+
+      function updateUI() {
+        const bigNumber = document.getElementById("bigNumber");
+        const progressText = document.getElementById("progressText");
+        const remainingText =
+          document.getElementById("remainingText");
+        const fill = document.getElementById("fill");
+        const percentPill = document.getElementById("percentPill");
+        const status = document.getElementById("status");
+
+        const pct = clamp((oz / goalOz) * 100, 0, 999);
+        bigNumber.textContent = oz;
+        progressText.textContent = `${oz} / ${goalOz}`;
+        percentPill.textContent = `${Math.floor(pct)}%`;
+
+        const remaining = Math.max(0, goalOz - oz);
+        remainingText.textContent =
+          remaining === 0 ? "Goal hit 🎉" : `${remaining} oz left`;
+
+        fill.style.width = `${clamp((oz / goalOz) * 100, 0, 100)}%`;
+
+        // show next reset time (approx) from stored expiry
+        const exp = parseInt(
+          localStorage.getItem("water_expiry") || "0",
+          10,
+        );
+        if (exp) {
+          const d = new Date(exp);
+          status.textContent = `Saved on device • resets at ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+        } else {
+          status.textContent = "Saved on device";
+        }
+
+        saveState();
+      }
+
+      function addWater(amount) {
+        oz += amount;
+        updateUI();
+      }
+
+      function subtractWater(amount) {
+        oz = Math.max(0, oz - amount);
+        updateUI();
+      }
+
+      function reset() {
+        oz = 0;
+        // reset expiry too so it recalculates cleanly
+        localStorage.setItem(
+          "water_expiry",
+          String(computeNext5amCentralExpiry()),
+        );
+        updateUI();
+      }
+
+      function setGoalPrompt() {
+        const input = prompt("Set daily goal (oz):", String(goalOz));
+        if (!input) return;
+        const val = parseInt(input, 10);
+        if (!Number.isFinite(val) || val <= 0) return;
+        goalOz = val;
+        updateUI();
+      }
+
+      loadState();
+      document.addEventListener("DOMContentLoaded", () => {
+        updateUI();
+      });
+    </script>
+  </body>
+</html>
