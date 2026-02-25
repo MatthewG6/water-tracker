@@ -297,16 +297,14 @@
         display: flex; /* center the app inside the page */
         justify-content: center;
         align-items: flex-start;
-      }
 
-      /* Give pages breathing room on mobile so cards don't touch at the seam */
-      .page {
-        padding: 0 10px; /* default gutter */
+        /* gutter so pages/cards don't “kiss” at the swipe seam */
+        padding: 0 16px;
       }
 
       @media (max-width: 520px) {
         .page {
-          padding: 0 14px; /* a bit more on phones */
+          padding: 0 24px;
         }
       }
 
@@ -349,7 +347,7 @@
 
       @media (max-width: 520px) {
         .card {
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+          box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16);
         }
       }
 
@@ -688,8 +686,6 @@
         pulseCard();
 
         const result = WT.addWater(amount);
-        haptic(12);
-        pulseCard();
         oz = result.totalOz;
         updateUI();
       }
