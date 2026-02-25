@@ -329,22 +329,6 @@
         padding: 0;
       }
 
-      @keyframes pulsePop {
-        0% {
-          transform: scale(1);
-        }
-        35% {
-          transform: scale(1.03);
-        }
-        100% {
-          transform: scale(1);
-        }
-      }
-
-      .pulse {
-        animation: pulsePop 160ms ease-out;
-      }
-
       @media (max-width: 520px) {
         .card {
           box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16);
@@ -494,22 +478,6 @@
     <script src="data.js"></script>
 
     <script>
-      function haptic(ms = 12) {
-        // Works on many Android devices; iOS Safari usually ignores it (normal)
-        if (navigator.vibrate) navigator.vibrate(ms);
-      }
-
-      function pulseCard() {
-        const card = document.querySelector(
-          ".page:nth-child(1) .card",
-        );
-        if (!card) return;
-        card.classList.remove("pulse");
-        // force reflow so animation can restart
-        void card.offsetWidth;
-        card.classList.add("pulse");
-      }
-
       let oz = 0;
       let goalOz = 128;
       let weekChart = null;
@@ -682,25 +650,18 @@
       }
 
       function addWater(amount) {
-        haptic(12);
-        pulseCard();
-
         const result = WT.addWater(amount);
         oz = result.totalOz;
         updateUI();
       }
 
       function undoLast() {
-        haptic(10);
-        pulseCard();
         const result = WT.undoLastEntry();
         oz = result.totalOz;
         updateUI();
       }
 
       function reset() {
-        haptic(14);
-        pulseCard();
         const result = WT.resetToday();
         oz = result.totalOz;
         updateUI();
