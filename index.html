@@ -36,7 +36,7 @@
         --good: #3ddc97;
         --bad: #ff5a5f;
 
-        --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
         --radius: 22px;
       }
 
@@ -86,6 +86,7 @@
 
       .app {
         width: min(420px, 100%);
+        margin: 0 auto;
         display: grid;
         gap: 14px;
       }
@@ -267,225 +268,420 @@
         font-weight: 750;
         font-size: 13px;
       }
+
+      /* Swipe container */
+      .pager {
+        width: 100%;
+        max-width: 520px;
+        height: 100%;
+        display: flex;
+
+        overflow-x: auto; /* <- DO NOT REMOVE */
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+
+        /* hide scrollbar (optional) */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      .pager::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+      }
+
+      .page {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+
+        display: flex; /* center the app inside the page */
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      /* Keep your existing center layout, but don't fight pager */
+      body {
+        place-items: center;
+      }
+
+      .dots {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .dotBtn {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.14);
+        padding: 0;
+      }
+
+      @keyframes pulsePop {
+        0% {
+          transform: scale(1);
+        }
+        35% {
+          transform: scale(1.03);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulsePop 160ms ease-out;
+      }
     </style>
   </head>
 
   <body>
-    <div class="app">
-      <div class="header">
-        <div>
-          <div class="title">Gallon Water Tracker</div>
-          <div class="subtitle">Resets daily at 5:00 AM Central</div>
-        </div>
-        <div class="goalPill">
-          <span class="dot"></span>
-          <span>Goal: <strong>128 oz</strong></span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="bigRow">
-          <div>
-            <span class="bigNumber" id="bigNumber">0</span>
-            <span class="unit">oz</span>
+    <div class="pager" id="pager">
+      <!-- PAGE 1: Tracker -->
+      <section class="page">
+        <div class="app">
+          <div class="header">
+            <div>
+              <div class="title">Gallon Water Tracker</div>
+              <div class="subtitle">
+                Resets daily at 5:00 AM Central
+              </div>
+            </div>
+            <div class="goalPill">
+              <span class="dot"></span>
+              <span
+                >Goal: <strong id="goalText1">128</strong> oz</span
+              >
+            </div>
           </div>
-          <div class="goalPill" id="percentPill">0%</div>
-        </div>
 
-        <div class="progressWrap">
-          <div class="progressTop">
-            <span id="progressText">0 / 128</span>
-            <span id="remainingText">128 oz left</span>
+          <div class="card">
+            <div class="bigRow">
+              <div>
+                <span class="bigNumber" id="bigNumber">0</span>
+                <span class="unit">oz</span>
+              </div>
+              <div class="goalPill" id="percentPill">0%</div>
+            </div>
+
+            <div class="progressWrap">
+              <div class="progressTop">
+                <span id="progressText">0 / 128</span>
+                <span id="remainingText">128 oz left</span>
+              </div>
+              <div class="bar">
+                <div class="fill" id="fill"></div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <button class="primary" onclick="addWater(8)">
+                +8
+              </button>
+              <button class="primary" onclick="addWater(16)">
+                +16
+              </button>
+              <button class="primary" onclick="addWater(25)">
+                +25
+              </button>
+
+              <button class="ghost" onclick="addWater(32)">
+                +32
+              </button>
+              <button class="ghost" onclick="undoLast()">Undo</button>
+              <button class="danger" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="footerRow">
+              <div class="status" id="status">Saved on device</div>
+              <div style="display: flex; gap: 10px">
+                <button
+                  class="tinyBtn ghost"
+                  onclick="setGoalPrompt()"
+                >
+                  Change goal
+                </button>
+                <button class="tinyBtn ghost" onclick="goToPage(1)">
+                  Weekly
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="bar">
-            <div class="fill" id="fill"></div>
+        </div>
+      </section>
+
+      <!-- PAGE 2: Weekly -->
+      <section class="page">
+        <div class="app">
+          <div class="header">
+            <div>
+              <div class="title">Weekly</div>
+              <div class="subtitle">
+                Last 7 days • resets at 5:00 AM
+              </div>
+            </div>
+            <button class="tinyBtn ghost" onclick="goToPage(0)">
+              Back
+            </button>
+          </div>
+
+          <div class="card">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 12px;
+              "
+            >
+              <div class="subtitle" id="weekStats">—</div>
+              <div class="goalPill">
+                <span class="dot"></span>Goal:
+                <strong id="goalText2">128</strong> oz
+              </div>
+            </div>
+
+            <div style="margin-top: 14px">
+              <canvas id="weekChart" height="160"></canvas>
+            </div>
           </div>
         </div>
-
-        <div class="grid">
-          <button class="primary" onclick="addWater(8)">+8</button>
-          <button class="primary" onclick="addWater(16)">+16</button>
-          <button class="primary" onclick="addWater(25)">+25</button>
-
-          <button class="ghost" onclick="addWater(32)">+32</button>
-          <button class="ghost" onclick="subtractWater(8)">
-            Undo -8
-          </button>
-          <button class="danger" onclick="reset()">Reset</button>
-        </div>
-
-        <div class="footerRow">
-          <div class="status" id="status">Saved on device</div>
-          <button class="tinyBtn ghost" onclick="setGoalPrompt()">
-            Change goal
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
 
+    <!-- dots -->
+    <div class="dots">
+      <button
+        class="dotBtn"
+        onclick="goToPage(0)"
+        aria-label="Tracker"
+      ></button>
+      <button
+        class="dotBtn"
+        onclick="goToPage(1)"
+        aria-label="Weekly"
+      ></button>
+    </div>
+
+    <!-- Chart.js FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Your data layer -->
+    <script src="data.js"></script>
+
     <script>
+      function haptic(ms = 12) {
+        // Works on many Android devices; iOS Safari usually ignores it (normal)
+        if (navigator.vibrate) navigator.vibrate(ms);
+      }
+
+      function pulseCard() {
+        const card = document.querySelector(
+          ".page:nth-child(1) .card",
+        );
+        if (!card) return;
+        card.classList.remove("pulse");
+        // force reflow so animation can restart
+        void card.offsetWidth;
+        card.classList.add("pulse");
+      }
+
       let oz = 0;
       let goalOz = 128;
-
-      function computeNext5amCentralExpiry() {
-        const now = new Date();
-        const fmt = new Intl.DateTimeFormat("en-US", {
-          timeZone: "America/Chicago",
-          year: "numeric",
-          month: "numeric",
-          day: "numeric",
-          hour: "numeric",
-          minute: "numeric",
-          second: "numeric",
-          hour12: false,
-        });
-
-        const parts = fmt.formatToParts(now).reduce((acc, p) => {
-          if (p.type !== "literal") acc[p.type] = p.value;
-          return acc;
-        }, {});
-
-        const centralYear = parseInt(parts.year, 10);
-        const centralMonth = parseInt(parts.month, 10);
-        const centralDay = parseInt(parts.day, 10);
-        const centralHour = parseInt(parts.hour, 10);
-        const centralMinute = parseInt(parts.minute, 10);
-        const centralSecond = parseInt(parts.second, 10);
-
-        let target = new Date(
-          centralYear,
-          centralMonth - 1,
-          centralDay,
-        );
-        if (centralHour >= 5) target.setDate(target.getDate() + 1);
-
-        const targetYear = target.getFullYear();
-        const targetMonth = target.getMonth();
-        const targetDayNum = target.getDate();
-
-        const localForCentralNow = new Date(
-          centralYear,
-          centralMonth - 1,
-          centralDay,
-          centralHour,
-          centralMinute,
-          centralSecond,
-        );
-
-        const offsetMs = Date.now() - localForCentralNow.getTime();
-
-        const localForTarget5am = new Date(
-          targetYear,
-          targetMonth,
-          targetDayNum,
-          5,
-          0,
-          0,
-        );
-
-        let expiryMs = localForTarget5am.getTime() + offsetMs;
-        if (expiryMs <= Date.now()) expiryMs += 24 * 60 * 60 * 1000;
-        return expiryMs;
-      }
+      let weekChart = null;
 
       function saveState() {
         try {
-          localStorage.setItem("water_oz", String(oz));
           localStorage.setItem("water_goal", String(goalOz));
-
-          let expiry = parseInt(
-            localStorage.getItem("water_expiry"),
-            10,
-          );
-          if (!expiry || expiry <= Date.now()) {
-            expiry = computeNext5amCentralExpiry();
-            localStorage.setItem("water_expiry", String(expiry));
-          }
         } catch (e) {}
       }
 
       function loadState() {
-        try {
-          const expiry = parseInt(
-            localStorage.getItem("water_expiry"),
-            10,
-          );
-          if (!expiry || expiry <= Date.now()) {
-            localStorage.removeItem("water_oz");
-            localStorage.setItem(
-              "water_expiry",
-              String(computeNext5amCentralExpiry()),
-            );
-            oz = 0;
-          } else {
-            const stored = localStorage.getItem("water_oz");
-            oz = stored ? parseInt(stored, 10) || 0 : 0;
-          }
+        const today = WT.getTodayTotal();
+        oz = today.totalOz;
 
-          const g = localStorage.getItem("water_goal");
-          goalOz = g ? Math.max(1, parseInt(g, 10) || 128) : 128;
-        } catch (e) {
-          oz = 0;
-          goalOz = 128;
-        }
+        const g = localStorage.getItem("water_goal");
+        goalOz = g ? Math.max(1, parseInt(g, 10) || 128) : 128;
+      }
+
+      function goToPage(i) {
+        const pager = document.getElementById("pager");
+        if (!pager) return;
+        pager.scrollTo({
+          left: pager.clientWidth * i,
+          behavior: "smooth",
+        });
       }
 
       function clamp(n, min, max) {
         return Math.min(max, Math.max(min, n));
       }
 
+      function formatLabel(dayKey) {
+        const [y, m, d] = dayKey.split("-").map(Number);
+        const dt = new Date(y, m - 1, d, 12, 0, 0);
+        return new Intl.DateTimeFormat("en-US", {
+          weekday: "short",
+        }).format(dt);
+      }
+
+      function buildWeekChart() {
+        const canvas = document.getElementById("weekChart");
+        if (!canvas) return;
+
+        const week = WT.getLastNDaysTotals(7);
+        const labels = week.map((x) => formatLabel(x.dayKey));
+        const values = week.map((x) => x.totalOz);
+
+        const css = getComputedStyle(document.documentElement);
+        const text =
+          css.getPropertyValue("--muted").trim() ||
+          "rgba(255,255,255,.65)";
+        const grid = "rgba(255,255,255,0.10)";
+        const blue1 =
+          css.getPropertyValue("--blue1").trim() || "#4cc9f0";
+        const blue2 =
+          css.getPropertyValue("--blue2").trim() || "#4895ef";
+
+        if (weekChart) weekChart.destroy();
+
+        weekChart = new Chart(canvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Water (oz)",
+                data: values,
+                borderRadius: 10,
+                borderSkipped: false,
+                backgroundColor: (ctx) => {
+                  const chart = ctx.chart;
+                  const area = chart.chartArea;
+                  if (!area) return blue2;
+                  const g = chart.ctx.createLinearGradient(
+                    0,
+                    area.bottom,
+                    0,
+                    area.top,
+                  );
+                  g.addColorStop(0, blue2);
+                  g.addColorStop(1, blue1);
+                  return g;
+                },
+              },
+              {
+                type: "line",
+                label: "Goal",
+                data: new Array(7).fill(goalOz),
+                borderColor: "rgba(255,255,255,0.55)",
+                borderWidth: 2,
+                borderDash: [6, 6],
+                pointRadius: 0,
+                tension: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 220 },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                displayColors: false,
+                callbacks: { label: (c) => `${c.parsed.y} oz` },
+              },
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: text, font: { weight: 700 } },
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: grid },
+                ticks: { color: text },
+              },
+            },
+          },
+        });
+      }
+
+      function refreshWeekChart() {
+        if (!weekChart) return buildWeekChart();
+        const week = WT.getLastNDaysTotals(7);
+        weekChart.data.labels = week.map((x) =>
+          formatLabel(x.dayKey),
+        );
+        weekChart.data.datasets[0].data = week.map((x) => x.totalOz);
+        weekChart.data.datasets[1].data = new Array(7).fill(goalOz);
+        weekChart.update();
+      }
+
+      function updateWeeklyHeader() {
+        const week = WT.getLastNDaysTotals(7);
+        const total = week.reduce((a, x) => a + x.totalOz, 0);
+        const avg = Math.round((total / 7) * 10) / 10;
+
+        const ws = document.getElementById("weekStats");
+        if (ws)
+          ws.textContent = `Total: ${Math.round(total)} oz • Avg: ${avg} oz/day`;
+
+        const g2 = document.getElementById("goalText2");
+        if (g2) g2.textContent = String(goalOz);
+      }
+
       function updateUI() {
-        const bigNumber = document.getElementById("bigNumber");
-        const progressText = document.getElementById("progressText");
-        const remainingText =
-          document.getElementById("remainingText");
-        const fill = document.getElementById("fill");
-        const percentPill = document.getElementById("percentPill");
-        const status = document.getElementById("status");
+        document.getElementById("goalText1").textContent =
+          String(goalOz);
 
         const pct = clamp((oz / goalOz) * 100, 0, 999);
-        bigNumber.textContent = oz;
-        progressText.textContent = `${oz} / ${goalOz}`;
-        percentPill.textContent = `${Math.floor(pct)}%`;
+        document.getElementById("bigNumber").textContent = oz;
+        document.getElementById("progressText").textContent =
+          `${oz} / ${goalOz}`;
+        document.getElementById("percentPill").textContent =
+          `${Math.floor(pct)}%`;
 
         const remaining = Math.max(0, goalOz - oz);
-        remainingText.textContent =
+        document.getElementById("remainingText").textContent =
           remaining === 0 ? "Goal hit 🎉" : `${remaining} oz left`;
 
-        fill.style.width = `${clamp((oz / goalOz) * 100, 0, 100)}%`;
-
-        // show next reset time (approx) from stored expiry
-        const exp = parseInt(
-          localStorage.getItem("water_expiry") || "0",
-          10,
-        );
-        if (exp) {
-          const d = new Date(exp);
-          status.textContent = `Saved on device • resets at ${d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-        } else {
-          status.textContent = "Saved on device";
-        }
+        document.getElementById("fill").style.width =
+          `${clamp((oz / goalOz) * 100, 0, 100)}%`;
+        document.getElementById("status").textContent =
+          "Saved on device • resets at 5:00 AM";
 
         saveState();
+        updateWeeklyHeader();
+        refreshWeekChart();
       }
 
       function addWater(amount) {
-        oz += amount;
+        haptic(12);
+        pulseCard();
+
+        const result = WT.addWater(amount);
+        haptic(12);
+        pulseCard();
+        oz = result.totalOz;
         updateUI();
       }
 
-      function subtractWater(amount) {
-        oz = Math.max(0, oz - amount);
+      function undoLast() {
+        haptic(12);
+        pulseCard();
+        const result = WT.undoLastEntry();
+        oz = result.totalOz;
         updateUI();
       }
 
       function reset() {
-        oz = 0;
-        // reset expiry too so it recalculates cleanly
-        localStorage.setItem(
-          "water_expiry",
-          String(computeNext5amCentralExpiry()),
-        );
+        const result = WT.resetToday();
+        oz = result.totalOz;
         updateUI();
       }
 
@@ -498,9 +694,10 @@
         updateUI();
       }
 
-      loadState();
       document.addEventListener("DOMContentLoaded", () => {
+        loadState();
         updateUI();
+        buildWeekChart();
       });
     </script>
   </body>
