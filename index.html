@@ -672,7 +672,7 @@
       }
 
       function undoLast() {
-        haptic(12);
+        haptic(10);
         pulseCard();
         const result = WT.undoLastEntry();
         oz = result.totalOz;
@@ -680,6 +680,8 @@
       }
 
       function reset() {
+        haptic(14);
+        pulseCard();
         const result = WT.resetToday();
         oz = result.totalOz;
         updateUI();
