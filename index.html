@@ -299,6 +299,17 @@
         align-items: flex-start;
       }
 
+      /* Give pages breathing room on mobile so cards don't touch at the seam */
+      .page {
+        padding: 0 10px; /* default gutter */
+      }
+
+      @media (max-width: 520px) {
+        .page {
+          padding: 0 14px; /* a bit more on phones */
+        }
+      }
+
       /* Keep your existing center layout, but don't fight pager */
       body {
         place-items: center;
@@ -334,6 +345,18 @@
 
       .pulse {
         animation: pulsePop 160ms ease-out;
+      }
+
+      @media (max-width: 520px) {
+        .card {
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 16px;
+        }
       }
     </style>
   </head>
