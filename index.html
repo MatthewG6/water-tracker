@@ -269,6 +269,32 @@
         font-size: 13px;
       }
 
+      .chartTabs {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+
+      .tabBtn {
+        padding: 10px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .tabBtn.active {
+        background: linear-gradient(
+          180deg,
+          rgba(76, 201, 240, 0.95),
+          rgba(72, 149, 239, 0.95)
+        );
+        color: #061021;
+        border-color: transparent;
+      }
+
       /* Swipe container */
       .pager {
         width: 100%;
@@ -423,9 +449,9 @@
         <div class="app">
           <div class="header">
             <div>
-              <div class="title">Weekly</div>
+              <div class="title">Insights</div>
               <div class="subtitle">
-                Last 7 days • resets at 5:00 AM
+                Day, week, month, year • resets at 5:00 AM
               </div>
             </div>
             <button class="tinyBtn ghost" onclick="goToPage(0)">
@@ -449,8 +475,39 @@
               </div>
             </div>
 
+            <div class="chartTabs">
+              <button
+                class="tabBtn active"
+                id="tab-day"
+                onclick="setChartRange('day')"
+              >
+                Day
+              </button>
+              <button
+                class="tabBtn"
+                id="tab-week"
+                onclick="setChartRange('week')"
+              >
+                Week
+              </button>
+              <button
+                class="tabBtn"
+                id="tab-month"
+                onclick="setChartRange('month')"
+              >
+                Month
+              </button>
+              <button
+                class="tabBtn"
+                id="tab-year"
+                onclick="setChartRange('year')"
+              >
+                Year
+              </button>
+            </div>
+
             <div style="margin-top: 14px">
-              <canvas id="weekChart" height="160"></canvas>
+              <canvas id="insightsChart" height="180"></canvas>
             </div>
           </div>
         </div>
@@ -480,7 +537,8 @@
     <script>
       let oz = 0;
       let goalOz = 128;
-      let weekChart = null;
+      let insightsChart = null;
+      let chartRange = "day";
 
       function saveState() {
         try {
@@ -509,119 +567,345 @@
         return Math.min(max, Math.max(min, n));
       }
 
-      function formatLabel(dayKey) {
-        const [y, m, d] = dayKey.split("-").map(Number);
-        const dt = new Date(y, m - 1, d, 12, 0, 0);
-        return new Intl.DateTimeFormat("en-US", {
-          weekday: "short",
-        }).format(dt);
+      function getChartTheme() {
+        const css = getComputedStyle(document.documentElement);
+        return {
+          text:
+            css.getPropertyValue("--muted").trim() ||
+            "rgba(255,255,255,.65)",
+          grid: "rgba(255,255,255,0.10)",
+          blue1: css.getPropertyValue("--blue1").trim() || "#4cc9f0",
+          blue2: css.getPropertyValue("--blue2").trim() || "#4895ef",
+        };
       }
 
-      function buildWeekChart() {
-        const canvas = document.getElementById("weekChart");
-        if (!canvas) return;
+      function dayKeyToDate(dayKey) {
+        const [y, m, d] = dayKey.split("-").map(Number);
+        return new Date(y, m - 1, d, 12, 0, 0, 0);
+      }
 
-        const week = WT.getLastNDaysTotals(7);
-        const labels = week.map((x) => formatLabel(x.dayKey));
-        const values = week.map((x) => x.totalOz);
+      function makeDayKey(y, m, d) {
+        const mm = String(m).padStart(2, "0");
+        const dd = String(d).padStart(2, "0");
+        return `${y}-${mm}-${dd}`;
+      }
 
-        const css = getComputedStyle(document.documentElement);
-        const text =
-          css.getPropertyValue("--muted").trim() ||
-          "rgba(255,255,255,.65)";
-        const grid = "rgba(255,255,255,0.10)";
-        const blue1 =
-          css.getPropertyValue("--blue1").trim() || "#4cc9f0";
-        const blue2 =
-          css.getPropertyValue("--blue2").trim() || "#4895ef";
+      function formatTime(ts) {
+        return new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(new Date(ts));
+      }
 
-        if (weekChart) weekChart.destroy();
-
-        weekChart = new Chart(canvas, {
-          type: "bar",
-          data: {
-            labels,
+      function getDayChartData(state, dayKey) {
+        const entries = state.entries[dayKey] || [];
+        if (!entries.length) {
+          return {
+            labels: ["No entries"],
             datasets: [
               {
-                label: "Water (oz)",
-                data: values,
-                borderRadius: 10,
-                borderSkipped: false,
-                backgroundColor: (ctx) => {
-                  const chart = ctx.chart;
-                  const area = chart.chartArea;
-                  if (!area) return blue2;
-                  const g = chart.ctx.createLinearGradient(
-                    0,
-                    area.bottom,
-                    0,
-                    area.top,
-                  );
-                  g.addColorStop(0, blue2);
-                  g.addColorStop(1, blue1);
-                  return g;
-                },
-              },
-              {
-                type: "line",
-                label: "Goal",
-                data: new Array(7).fill(goalOz),
-                borderColor: "rgba(255,255,255,0.55)",
-                borderWidth: 2,
-                borderDash: [6, 6],
-                pointRadius: 0,
-                tension: 0,
+                label: "Added (oz)",
+                data: [0],
+                borderRadius: 8,
               },
             ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 220 },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                displayColors: false,
-                callbacks: { label: (c) => `${c.parsed.y} oz` },
+            stats: "Today: no entries yet",
+            optionsPatch: {
+              scales: {
+                y: { beginAtZero: true, suggestedMax: goalOz },
               },
             },
+          };
+        }
+
+        return {
+          labels: entries.map((e) => formatTime(e.ts)),
+          datasets: [
+            {
+              label: "Added (oz)",
+              data: entries.map((e) => e.oz),
+              borderRadius: 8,
+            },
+          ],
+          stats: `Today: ${entries.length} entries • ${Math.round(oz)} oz total`,
+          optionsPatch: {
             scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: text, font: { weight: 700 } },
-              },
-              y: {
-                beginAtZero: true,
-                grid: { color: grid },
-                ticks: { color: text },
-              },
+              y: { beginAtZero: true },
             },
           },
+        };
+      }
+
+      function getWeekChartData(state, dayKey) {
+        const current = dayKeyToDate(dayKey);
+        const sunday = new Date(current);
+        sunday.setDate(current.getDate() - current.getDay());
+
+        const labels = [
+          "Sun",
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri",
+          "Sat",
+        ];
+        const values = [];
+
+        for (let i = 0; i < 7; i++) {
+          const dt = new Date(sunday);
+          dt.setDate(sunday.getDate() + i);
+          const key = makeDayKey(
+            dt.getFullYear(),
+            dt.getMonth() + 1,
+            dt.getDate(),
+          );
+          values.push(state.dailyTotals[key] || 0);
+        }
+
+        const total = values.reduce((a, b) => a + b, 0);
+        const avg = Math.round((total / 7) * 10) / 10;
+
+        return {
+          labels,
+          datasets: [
+            {
+              label: "Water (oz)",
+              data: values,
+              borderRadius: 10,
+              borderSkipped: false,
+            },
+          ],
+          stats: `Week total: ${Math.round(total)} oz • Avg: ${avg} oz/day`,
+          optionsPatch: {
+            scales: {
+              y: { beginAtZero: true },
+            },
+          },
+        };
+      }
+
+      function getMonthChartData(state, dayKey) {
+        const current = dayKeyToDate(dayKey);
+        const year = current.getFullYear();
+        const month = current.getMonth() + 1;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const starts = [1, 8, 15, 22, 29].filter(
+          (d) => d <= daysInMonth,
+        );
+
+        const labels = starts.map((d) => String(d));
+        const values = starts.map((start) => {
+          const end = Math.min(start + 6, daysInMonth);
+          let sum = 0;
+          let count = 0;
+          for (let d = start; d <= end; d++) {
+            sum += state.dailyTotals[makeDayKey(year, month, d)] || 0;
+            count++;
+          }
+          return Math.round((sum / count) * 10) / 10;
+        });
+
+        const avg =
+          values.length > 0
+            ? Math.round(
+                (values.reduce((a, b) => a + b, 0) / values.length) *
+                  10,
+              ) / 10
+            : 0;
+
+        return {
+          labels,
+          datasets: [
+            {
+              label: "Avg oz/day",
+              data: values,
+              borderRadius: 10,
+              borderSkipped: false,
+            },
+          ],
+          stats: `Month checkpoints avg: ${avg} oz/day`,
+          optionsPatch: {
+            scales: {
+              y: { beginAtZero: true },
+            },
+          },
+        };
+      }
+
+      function getYearChartData(state, dayKey) {
+        const current = dayKeyToDate(dayKey);
+        const year = current.getFullYear();
+        const currentMonth = current.getMonth() + 1;
+        const currentDay = current.getDate();
+        const labels = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+
+        const values = labels.map((_, idx) => {
+          const month = idx + 1;
+          let days = new Date(year, month, 0).getDate();
+          if (month > currentMonth) return 0;
+          if (month === currentMonth) days = currentDay;
+          let sum = 0;
+          for (let d = 1; d <= days; d++) {
+            sum += state.dailyTotals[makeDayKey(year, month, d)] || 0;
+          }
+          return Math.round((sum / days) * 10) / 10;
+        });
+
+        const ytdAvg =
+          currentMonth > 0
+            ? Math.round(
+                (values
+                  .slice(0, currentMonth)
+                  .reduce((a, b) => a + b, 0) /
+                  currentMonth) *
+                  10,
+              ) / 10
+            : 0;
+
+        return {
+          labels,
+          datasets: [
+            {
+              label: "Avg oz/day",
+              data: values,
+              borderRadius: 10,
+              borderSkipped: false,
+            },
+          ],
+          stats: `Year-to-date monthly avg: ${ytdAvg} oz/day`,
+          optionsPatch: {
+            scales: {
+              y: { beginAtZero: true },
+            },
+          },
+        };
+      }
+
+      function getRangeData(range) {
+        const state = WT.loadState();
+        const dayKey = WT.getTodayTotal().dayKey;
+        if (range === "week") return getWeekChartData(state, dayKey);
+        if (range === "month")
+          return getMonthChartData(state, dayKey);
+        if (range === "year") return getYearChartData(state, dayKey);
+        return getDayChartData(state, dayKey);
+      }
+
+      function setTabActive(range) {
+        ["day", "week", "month", "year"].forEach((id) => {
+          const el = document.getElementById(`tab-${id}`);
+          if (!el) return;
+          el.classList.toggle("active", id === range);
         });
       }
 
-      function refreshWeekChart() {
-        if (!weekChart) return buildWeekChart();
-        const week = WT.getLastNDaysTotals(7);
-        weekChart.data.labels = week.map((x) =>
-          formatLabel(x.dayKey),
-        );
-        weekChart.data.datasets[0].data = week.map((x) => x.totalOz);
-        weekChart.data.datasets[1].data = new Array(7).fill(goalOz);
-        weekChart.update();
+      function buildInsightsChart() {
+        const canvas = document.getElementById("insightsChart");
+        if (!canvas) return;
+        const theme = getChartTheme();
+        const rangeData = getRangeData(chartRange);
+
+        const chartData = {
+          labels: rangeData.labels,
+          datasets: rangeData.datasets.map((dataset) => ({
+            ...dataset,
+            backgroundColor:
+              dataset.backgroundColor ||
+              ((ctx) => {
+                const chart = ctx.chart;
+                const area = chart.chartArea;
+                if (!area) return theme.blue2;
+                const g = chart.ctx.createLinearGradient(
+                  0,
+                  area.bottom,
+                  0,
+                  area.top,
+                );
+                g.addColorStop(0, theme.blue2);
+                g.addColorStop(1, theme.blue1);
+                return g;
+              }),
+            borderColor: dataset.borderColor || "transparent",
+          })),
+        };
+
+        const baseOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 320, easing: "easeOutCubic" },
+          indexAxis: "x",
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              displayColors: false,
+              callbacks: {
+                label: (c) => {
+                  const value =
+                    typeof c.parsed.y === "number"
+                      ? c.parsed.y
+                      : c.parsed.x;
+                  return `${value} oz`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: theme.text, font: { weight: 700 } },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: theme.grid },
+              ticks: { color: theme.text },
+            },
+          },
+          ...rangeData.optionsPatch,
+        };
+
+        if (!insightsChart) {
+          insightsChart = new Chart(canvas, {
+            type: "bar",
+            data: chartData,
+            options: baseOptions,
+          });
+          updateWeeklyHeader();
+          return;
+        }
+
+        insightsChart.data.labels = chartData.labels;
+        insightsChart.data.datasets = chartData.datasets;
+        insightsChart.options = baseOptions;
+        insightsChart.update();
+        updateWeeklyHeader();
       }
 
       function updateWeeklyHeader() {
-        const week = WT.getLastNDaysTotals(7);
-        const total = week.reduce((a, x) => a + x.totalOz, 0);
-        const avg = Math.round((total / 7) * 10) / 10;
-
         const ws = document.getElementById("weekStats");
-        if (ws)
-          ws.textContent = `Total: ${Math.round(total)} oz • Avg: ${avg} oz/day`;
+        if (ws) ws.textContent = getRangeData(chartRange).stats;
 
         const g2 = document.getElementById("goalText2");
         if (g2) g2.textContent = String(goalOz);
+      }
+
+      function setChartRange(range) {
+        chartRange = range;
+        setTabActive(range);
+        buildInsightsChart();
       }
 
       function updateUI() {
@@ -645,8 +929,7 @@
           "Saved on device • resets at 5:00 AM";
 
         saveState();
-        updateWeeklyHeader();
-        refreshWeekChart();
+        buildInsightsChart();
       }
 
       function addWater(amount) {
@@ -679,7 +962,7 @@
       document.addEventListener("DOMContentLoaded", () => {
         loadState();
         updateUI();
-        buildWeekChart();
+        setChartRange("day");
       });
     </script>
   </body>
