@@ -1,72 +1,27 @@
-# Water Tracker
+# Daily Water
 
-Water Tracker is a simple and mobile-friendly hydration app that helps users track their daily water intake, stay consistent with their hydration goals, and view their progress throughout the day. The app is designed to feel clean, convenient, and easy to use, especially on a phone.
+The existing Water Tracker, refreshed as Daily Fuel's vibrant companion.
 
-## Overview
+Live: https://matthewg6.github.io/water-tracker/
 
-The purpose of Water Tracker is to give users a quick and simple way to log how much water they have drank during the day without dealing with clutter or unnecessary complexity. Users can set a daily water goal, add to their intake as they drink throughout the day, and see their progress update visually.
+- Cyan hydration ring, daily goal, 8/16/25/32 oz shortcuts, undo, and reset confirmation.
+- Recent sip log and Day/Week/Month/Year insights.
+- Device-local history, bundled fonts/charts, offline app shell, and Home Screen icons.
+- Link to Daily Fuel; each app retains its own records.
 
-The app is built with a phone-app style experience in mind and is designed to work well as a lightweight web app.
+## Development
+Buildless HTML/CSS/JavaScript. Run from this folder with Node 24:
 
-## Features
+```sh
+node --test tests/*.cjs
+node --check app.js
+node scripts/build.cjs
+python3 -m http.server 4174 --bind 127.0.0.1
+```
 
-- Set a custom daily water goal in ounces
-- Track current daily water intake
-- Add water throughout the day with quick updates
-- View progress as a percentage of the daily goal
-- Visual progress bar for hydration progress
-- Daily reset system so tracking starts fresh each day
-- Mobile-friendly layout
-- App-style experience when added to a home screen
-- Uses local storage so data stays saved on the device
+Run the cache build after changing app resources. GitHub Pages serves the existing main branch at the repository root. DESIGN.md records decisions; TASKS.md records verification.
 
-## Technologies Used
+## Existing data
+Records remain under wt:data:v1, with water_goal storing the daily target. The data layer is unchanged. The hydration day starts at 5 AM in the device's time zone. Daily totals remain saved; detailed sip entries retain the original 30-day limit. Data stays on the device and is never pushed to GitHub. Clearing website data can erase it.
 
-- **HTML**
-- **CSS**
-- **JavaScript**
-- **Local Storage**
-- **Progressive Web App (PWA) features**
-
-## How It Works
-
-The app allows users to set a hydration goal and log water intake throughout the day.
-
-General flow:
-
-1. User opens the app
-2. User sets a daily water goal in ounces
-3. User adds water as they drink throughout the day
-4. The app updates the total water consumed
-5. The progress bar and percentage update automatically
-6. The app resets daily so the user can begin again the next day
-
-## Data Storage
-
-Water Tracker uses the browser's local storage to save data on the device.
-
-Example stored values include:
-
-- `water_oz` – current water consumed
-- `water_goal` – daily hydration goal
-- `water_expiry` – reset timing for daily refresh
-
-This allows the app to preserve progress even if the page is refreshed or reopened later.
-
-## Daily Reset Logic
-
-The app includes a daily reset system so users start fresh each day.
-
-Instead of keeping the same total forever, the app stores an expiration/reset time and clears the daily intake when that time is reached. In this version of the project, the reset is based on **5:00 AM Central Time**, which helps separate late-night use from the next full day of tracking.
-
-## Mobile Experience
-
-This project is designed to feel more like a phone app than a traditional desktop webpage.
-
-Features supporting that experience include:
-
-- clean mobile layout
-- touch-friendly design
-- home screen app support
-- app icons and manifest configuration
-- lightweight and fast interaction
+Charts use the existing Chart.js 4.4.1 (MIT), bundled from its npm distribution. Fonts are bundled with their licenses in fonts/. The app has no account or cloud sync.

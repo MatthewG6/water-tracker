@@ -1,10 +1,10 @@
 {
-  "name": "Water Tracker",
-  "short_name": "Water",
+  "name": "Daily Water \u2014 Hydration Tracker",
+  "short_name": "Daily Water",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0b5fff",
-  "theme_color": "#0b5fff",
+  "background_color": "#0c1220",
+  "theme_color": "#0c1220",
   "icons": [
     {
       "src": "192.png",
@@ -16,5 +16,8 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "scope": "./",
+  "id": "./",
+  "description": "Your daily hydration, one sip at a time. Saved on your device."
 }
