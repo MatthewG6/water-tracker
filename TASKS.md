@@ -9,7 +9,7 @@
 - [x] Bundle existing chart version/fonts; refresh icons and installed-app metadata.
 - [x] Browser verify 390px layout, add/undo, goals, reset cancellation, chart ranges, and reload.
 - [x] Verify offline cache and reload without server.
-- [ ] Publish to existing GitHub Pages URL and verify deployment.
+- [x] Publish to existing GitHub Pages URL and verify deployment.
 
 Data layer and storage keys remain unchanged. Goal-setting retains the existing goal. Detailed entries keep their existing 30-day limit; daily totals keep their existing retention.
 
@@ -19,3 +19,4 @@ Data layer and storage keys remain unchanged. Goal-setting retains the existing 
 - Day/Week/Month/Year range switches verified. Phone width 390px has no horizontal document overflow. Offscreen page sizing avoids a large empty scroll region.
 - Server stopped, app reloaded from cache, saved total and weekly chart still worked.
 - data.js is byte-for-byte unchanged from the existing main branch.
+- Published app rendered successfully at https://matthewg6.github.io/water-tracker/. GitHub Pages deployment succeeded. Original manifest start URL/installed identity is preserved.
